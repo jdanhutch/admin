@@ -12,4 +12,5 @@ return [
     '@public' => '@root/public',
     '@runtime' => '@root/runtime',
     '@vendor' => '@root/vendor',
+    '@npm' => '@root/node_modules',
 ];

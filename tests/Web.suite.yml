@@ -2,9 +2,17 @@ actor: WebTester
 extensions:
   enabled:
     - Codeception\Extension\RunProcess:
-        0: composer serve
+        0: set APP_ENV=test
+        1: composer serve
         sleep: 3
 modules:
   enabled:
     - PhpBrowser:
         url: http://127.0.0.1:8080
+    - Db:
+        dsn: 'pgsql:host=localhost;port=5432;dbname=yii3_admin_test'
+        user: 'postgres'
+        password: 'password'
+        dump: 'tests/Support/Data/dump.sql'
+        cleanup: true
+        populate: true
