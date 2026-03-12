@@ -1,0 +1,20 @@
+actor: AcceptanceTester
+extensions:
+  enabled:
+    - Codeception\Extension\RunProcess:
+        0: set APP_ENV=test
+        1: composer serve
+        sleep: 5
+modules:
+  enabled:
+    - WebDriver:
+        url: http://localhost:8080
+        browser: chrome
+        window_size: 1280x720
+    - Db:
+        dsn: 'pgsql:host=localhost;port=5432;dbname=yii3_admin_test'
+        user: 'postgres'
+        password: 'password'
+        dump: 'tests/Support/Data/dump.sql'
+        populate: true
+        cleanup: true

@@ -5,6 +5,7 @@ declare(strict_types=1);
 use App\Shared\ApplicationParams;
 use Yiisoft\Aliases\Aliases;
 use Yiisoft\Assets\AssetManager;
+use Yiisoft\Db\Pgsql\Dsn;
 use Yiisoft\Definitions\Reference;
 use Yiisoft\Router\CurrentRoute;
 use Yiisoft\Router\UrlGeneratorInterface;
@@ -34,5 +35,16 @@ return [
         'injections' => [
             Reference::to(CsrfViewInjection::class),
         ],
+    ],
+
+    'yiisoft/db-pgsql' => [
+        'dsn' => new Dsn('pgsql', 'localhost', 'yii3_admin', '5432'),
+        'username' => 'postgres',
+        'password' => 'password',
+    ],
+
+    'yiisoft/db-migration' => [
+        'newMigrationNamespace' => 'App\\Migration',
+        'sourceNamespaces' => ['App\\Migration'],
     ],
 ];

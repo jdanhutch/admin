@@ -16,11 +16,5 @@ $this->setTitle($applicationParams->name);
 <div class="text-center">
     <h1>Hello!</h1>
 
-    <p>Let's start something great with <strong>Yii3</strong>!</p>
-
-    <p>
-        <a href="https://yiisoft.github.io/docs/" target="_blank" rel="noopener">
-            <i>Don't forget to check the guide.</i>
-        </a>
-    </p>
+    <p>Let's get organized!</p>
 </div>
