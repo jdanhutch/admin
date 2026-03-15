@@ -23,15 +23,21 @@ return [
                     Route::get('')
                         ->action(Web\Person\Admin\Action::class)
                         ->name('person/admin'),
-                    Route::get('/{id}')
-                        ->action(Web\Person\View\Action::class)
-                        ->name('person/view'),
-                    Route::methods([Method::GET, Method::POST], '/{id}/edit')
-                        ->action(Web\Person\Edit\Action::class)
-                        ->name('person/edit'),
-                    Route::post('/{id}/delete')
-                        ->action(Web\Person\Delete\Action::class)
-                        ->name('person/delete'),
+                    Group::create('/{id}')
+                        ->routes(
+                            Route::get('')
+                                ->action(Web\Person\View\Action::class)
+                                ->name('person/view'),
+                            Route::methods([Method::GET, Method::POST], '/edit')
+                                ->action(Web\Person\Edit\Action::class)
+                                ->name('person/edit'),
+                            Route::post('/delete')
+                                ->action(Web\Person\Delete\Action::class)
+                                ->name('person/delete'),
+                            Route::get('/chores')
+                                ->action(Web\Person\Chores\Action::class)
+                                ->name('person/chores')
+                        ),
                 ),
 
             Group::create('/chore-admin')
@@ -39,15 +45,21 @@ return [
                     Route::get('')
                         ->action(Web\Chore\Admin\Action::class)
                         ->name('chore/admin'),
-                    Route::get('/{id}')
-                        ->action(Web\Chore\View\Action::class)
-                        ->name('chore/view'),
-                    Route::methods([Method::GET, Method::POST], '/{id}/edit')
-                        ->action(Web\Chore\Edit\Action::class)
-                        ->name('chore/edit'),
-                    Route::post('/{id}/delete')
-                        ->action(Web\Chore\Delete\Action::class)
-                        ->name('chore/delete'),
+                    Group::create('/{id}')
+                        ->routes(
+                            Route::get('')
+                                ->action(Web\Chore\View\Action::class)
+                                ->name('chore/view'),
+                            Route::methods([Method::GET, Method::POST], '/edit')
+                                ->action(Web\Chore\Edit\Action::class)
+                                ->name('chore/edit'),
+                            Route::post('/delete')
+                                ->action(Web\Chore\Delete\Action::class)
+                                ->name('chore/delete'),
+                            Route::post('/mark')
+                                ->action(Web\Chore\Mark\Action::class)
+                                ->name('chore/mark'),
+                        ),
                 ),
         ),
 ];

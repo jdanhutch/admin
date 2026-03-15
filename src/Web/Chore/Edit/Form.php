@@ -16,6 +16,6 @@ final class Form extends FormModel
     public string $person = '';
 
     #[Label('Name')]
-    #[Length(min: 1)]
+    #[Length(min: 1, max: 64)]
     public string $name = '';
 }

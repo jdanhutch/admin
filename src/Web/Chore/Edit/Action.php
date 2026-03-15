@@ -69,6 +69,8 @@ final readonly class Action
         }
 
         return $this->viewRenderer->render(__DIR__ . '/template', [
+            'breadcrumbName' => $isNew ? '' : $chore->name,
+            'isNew' => $isNew,
             'form' => $form,
             'id' => $id,
             'personDataReader' => $personDataReader

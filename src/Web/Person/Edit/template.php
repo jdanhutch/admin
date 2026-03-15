@@ -47,4 +47,4 @@ echo Breadcrumbs::widget()
     <?= Field::text($form, 'name')->required() ?>
     <?= Button::link('Cancel', $creating ? $adminUrl : $urlGenerator->generate('person/view', ['id' => $id])) ?>
     <?= Button::submit('Save')->variant(ButtonVariant::PRIMARY) ?>
-<?=  $htmlForm->close() ?>
+<?= $htmlForm->close() ?>

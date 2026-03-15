@@ -35,6 +35,7 @@ $this->setTitle("{$applicationParams->name} - Chore Admin");
         ->columns(
             new DataColumn('id'),
             new DataColumn('name'),
+            new DataColumn('personName', 'Person'),
             new ActionColumn(
                 before: '<div class="btn-group">',
                 after: '</div>',

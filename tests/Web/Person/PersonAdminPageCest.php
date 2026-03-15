@@ -49,7 +49,7 @@ final class PersonAdminPageCest
         $I->amOnPage('/person-admin');
         $I->expectTo('go to the view person page from the person admin page');
         $I->click('View');
-        $I->seeCurrentUrlEquals('/person-admin/019cd5cd-8ba6-723d-8525-01672c6a37b6');
+        $I->seeCurrentUrlEquals('/person-admin/019cd5cd-92ae-739c-82c9-ef18b268f774');
     }
 
     public function editPersonButton(WebTester $I): void
@@ -58,6 +58,6 @@ final class PersonAdminPageCest
         $I->amOnPage('/person-admin');
         $I->expectTo('go to the edit person page from the person admin page');
         $I->click('Edit');
-        $I->seeCurrentUrlEquals('/person-admin/019cd5cd-8ba6-723d-8525-01672c6a37b6/edit');
+        $I->seeCurrentUrlEquals('/person-admin/019cd5cd-92ae-739c-82c9-ef18b268f774/edit');
     }
 }

@@ -49,7 +49,7 @@ final class ChoreAdminPageCest
         $I->amOnPage('/chore-admin');
         $I->expectTo('go to the view chore page from the chore admin page');
         $I->click('View');
-        $I->seeCurrentUrlEquals('/chore-admin/019cd5cd-d2d8-72a9-b4c3-41fef1019587');
+        $I->seeCurrentUrlEquals('/chore-admin/019cd5ce-3d83-712c-9447-51209658dd41');
     }
 
     public function editChoreButton(WebTester $I): void
@@ -58,6 +58,6 @@ final class ChoreAdminPageCest
         $I->amOnPage('/chore-admin');
         $I->expectTo('go to the edit chore page from the chore admin page');
         $I->click('Edit');
-        $I->seeCurrentUrlEquals('/chore-admin/019cd5cd-d2d8-72a9-b4c3-41fef1019587/edit');
+        $I->seeCurrentUrlEquals('/chore-admin/019cd5ce-3d83-712c-9447-51209658dd41/edit');
     }
 }

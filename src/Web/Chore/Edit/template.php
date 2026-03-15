@@ -14,16 +14,17 @@ use Yiisoft\Router\UrlGeneratorInterface;
 use Yiisoft\Yii\View\Renderer\Csrf;
 
 /**
+ * @var string $breadcrumbName
  * @var Form $form
  * @var string[] $errors
  * @var UrlGeneratorInterface $urlGenerator
  * @var Csrf $csrf
  * @var string $id
+ * @var bool $isNew
  * @var PersonDataReader $personDataReader
  */
 
-$creating = $id === 'new';
-$action = $creating ? 'Create' : 'Edit';
+$action = $isNew ? 'Create' : 'Edit';
 
 $adminUrl = $urlGenerator->generate('chore/admin');
 
@@ -37,8 +38,8 @@ $htmlForm = Html::form()
 
 $this->setTitle("{$applicationParams->name} - {$action} Chore");
 
-if (!$creating) {
-    $breadcrumbLinks[] = BreadcrumbLink::to($form->name);
+if ($breadcrumbName) {
+    $breadcrumbLinks[] = BreadcrumbLink::to($breadcrumbName);
 }
 
 end($breadcrumbLinks)->active(true);
@@ -53,6 +54,6 @@ echo Breadcrumbs::widget()
         iterator_to_array($personDataReader->read())
     ))->required() ?>
     <?= Field::text($form, 'name')->required() ?>
-    <?= Button::link('Cancel', $creating ? $adminUrl : $urlGenerator->generate('chore/view', ['id' => $id])) ?>
+    <?= Button::link('Cancel', $isNew ? $adminUrl : $urlGenerator->generate('chore/view', ['id' => $id])) ?>
     <?= Button::submit('Save')->variant(ButtonVariant::PRIMARY) ?>
-<?=  $htmlForm->close() ?>
+<?= $htmlForm->close() ?>

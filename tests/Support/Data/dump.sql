@@ -125,7 +125,7 @@ ALTER TABLE ONLY public.migration ALTER COLUMN id SET DEFAULT nextval('public.mi
 COPY public.chore (id, person_id, name, done) FROM stdin;
 019cd5cd-d2d8-72a9-b4c3-41fef1019587	019cd5cd-8ba6-723d-8525-01672c6a37b6	Do the laundry	f
 019cd5ce-0b7c-7373-8514-256dad0fe4da	019cd5cd-8ba6-723d-8525-01672c6a37b6	Wash dishes	f
-019cd5ce-3d83-712c-9447-51209658dd41	019cd5cd-92ae-739c-82c9-ef18b268f774	Clean bathroom	f
+019cd5ce-3d83-712c-9447-51209658dd41	019cd5cd-92ae-739c-82c9-ef18b268f774	Clean bathroom	t
 \.
 
 

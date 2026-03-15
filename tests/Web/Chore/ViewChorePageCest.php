@@ -44,6 +44,15 @@ final class ViewChorePageCest
         $I->seeCurrentUrlEquals('/chore-admin');
     }
 
+    public function personButton(WebTester $I): void
+    {
+        $I->wantTo('view chore page\'s person button works');
+        $I->amOnPage('/chore-admin/019cd5cd-d2d8-72a9-b4c3-41fef1019587');
+        $I->expectTo('go to the view person page from the view chore page');
+        $I->click('John Doe');
+        $I->seeCurrentUrlEquals('/person-admin/019cd5cd-8ba6-723d-8525-01672c6a37b6');
+    }
+
     public function editChoreButton(WebTester $I): void
     {
         $I->wantTo('view chore page\'s edit button works');

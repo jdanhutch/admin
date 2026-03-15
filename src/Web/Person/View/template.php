@@ -27,7 +27,11 @@ echo Breadcrumbs::widget()
     <?= Html::encode($person->name) ?>
 </h1>
 
-<?= Button::link('Edit', $urlGenerator->generate('person/edit', ['id' => $person->getId()])) ?>
+<?= Button::link('Mark Chores', $urlGenerator->generate('person/chores', ['id' => $person->getId()])) ?>
+
+<div>
+    <?= Button::link('Edit', $urlGenerator->generate('person/edit', ['id' => $person->getId()])) ?>
+</div>
 
 <?php
 $deleteForm = Html::form()

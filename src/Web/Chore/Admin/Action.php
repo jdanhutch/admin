@@ -10,12 +10,15 @@ use Yiisoft\Yii\View\Renderer\WebViewRenderer;
 
 final readonly class Action
 {
+    public function __construct(
+        private WebViewRenderer $viewRenderer,
+    ) {}
+
     public function __invoke(
         ChoreDataReader $choreDataReader,
-        WebViewRenderer $viewRenderer,
     ): ResponseInterface
     {
-        return $viewRenderer->render(
+        return $this->viewRenderer->render(
             __DIR__ . '/template',
             [
                 'dataReader' => $choreDataReader
