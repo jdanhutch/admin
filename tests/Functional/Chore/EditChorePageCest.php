@@ -73,14 +73,14 @@ final class EditChorePageCest
     #[DataProvider('_editData')]
     public function edit(FunctionalTester $tester, Example $example): void
     {
-        $person = $example['formData']['person'] ?? null;
-        $name = $example['formData']['name'] ?? null;
+        $expectedPerson = $example['formData']['person'] ?? null;
+        $expectedName = $example['formData']['name'] ?? null;
 
         if ($example['choreId'] !== 'new') {
-            $person ??= $tester->grabfromDatabase('public.chore', 'person_id', ['id' => $example['choreId']]);
-            $name ??= $tester->grabfromDatabase('public.chore', 'name', ['id' => $example['choreId']]);
-        } elseif ($name) {
-            $tester->dontSeeInDatabase('public.chore', ['name' => $name]);
+            $expectedPerson ??= $tester->grabfromDatabase('public.chore', 'person_id', ['id' => $example['choreId']]);
+            $expectedName ??= $tester->grabfromDatabase('public.chore', 'name', ['id' => $example['choreId']]);
+        } elseif ($expectedName) {
+            $tester->dontSeeInDatabase('public.chore', ['name' => $expectedName]);
         }
 
         $tester->seeNumRecords(3, 'public.chore');
@@ -88,8 +88,6 @@ final class EditChorePageCest
         $isValidUuid = Uuid::isValid($example['choreId']);
         $entries = $isValidUuid ? $tester->grabEntriesFromDatabase('public.chore', ['id' => $example['choreId']]) : [];
         $otherEntries = $tester->grabEntriesFromDatabase('public.chore', $isValidUuid ? ['id !=' => $example['choreId']] : []);
-
-        $isNew = $example['choreId'] === 'new';
 
         $response = $tester->sendRequest(
             new ServerRequest(
@@ -104,10 +102,10 @@ final class EditChorePageCest
         $contents = $response->getBody()->getContents();
 
         assertSame($example['responseCode'], $response->getStatusCode());
+        $tester->seeNumRecords($example['expected']['numResults'], 'public.chore');
 
         if (!empty($example['errorMessages']) || $example['responseCode'] === 404) {
-            $tester->seeNumRecords(3, 'public.chore');
-            $tester->dontSeeInDatabase('public.chore', ['name' => $name]);
+            $tester->dontSeeInDatabase('public.chore', ['name' => $expectedName]);
 
             foreach ($example['errorMessages'] as $errorMessage) {
                 assertStringContainsString($errorMessage, $contents);
@@ -118,20 +116,21 @@ final class EditChorePageCest
                 $tester->seeInDatabase('public.chore', $entry);
             }
         } else {
-            $location = $response->getHeaderLine('Location');
-            $urlPath = parse_url(filter_var($location, FILTER_SANITIZE_URL), PHP_URL_PATH);
-            assertSame(1, preg_match('#^/chore-admin/(.+)$#', $urlPath, $matches));
-            $choreId = $isNew ? $matches[1] : $example['choreId'];
+            $choreId = $example['choreId'];
 
-            // Created or edited chore
-            $tester->seeNumRecords($isNew ? 4 : 3, 'public.chore');
+            if (!$choreId) {
+                $location = $response->getHeaderLine('Location');
+                $urlPath = parse_url(filter_var($location, FILTER_SANITIZE_URL), PHP_URL_PATH);
+                assertSame(1, preg_match('#^/chore-admin/(.+)$#', $urlPath, $matches));
+                $choreId = $matches[1];
+            }
 
             // Created or edited chore correctly
             foreach ($entries as $entry) {
                 $tester->seeInDatabase('public.chore', [
                     'id' => $choreId,
-                    'person_id' => $person,
-                    'name' => $name,
+                    'person_id' => $expectedPerson,
+                    'name' => $expectedName,
                     'done' => $entry['done'],
                 ]);
             }
@@ -155,6 +154,10 @@ final class EditChorePageCest
                     'person' => '019cd5cd-8ba6-723d-8525-01672c6a37b6',
                     'name' => 'New chore',
                 ],
+                'expected' => [
+                    'numResults' => 4,
+                    'choreId' => '',
+                ],
             ],
             [
                 'testDescription' => 'new, invalid person',
@@ -166,6 +169,9 @@ final class EditChorePageCest
                 'formData' => [
                     'person' => '',
                     'name' => 'New chore',
+                ],
+                'expected' => [
+                    'numResults' => 3,
                 ],
             ],
             [
@@ -179,6 +185,9 @@ final class EditChorePageCest
                     'person' => '019cd5cd-8ba6-723d-8525-01672c6a37b6',
                     'name' => 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
                 ],
+                'expected' => [
+                    'numResults' => 3,
+                ],
             ],
             [
                 'testDescription' => 'new, empty',
@@ -189,6 +198,9 @@ final class EditChorePageCest
                 'responseCode' => 200,
                 'choreId' => 'new',
                 'formData' => [],
+                'expected' => [
+                    'numResults' => 3,
+                ],
             ],
             [
                 'testDescription' => 'existing, successful',
@@ -198,6 +210,10 @@ final class EditChorePageCest
                 'formData' => [
                     'person' => '019cd5cd-92ae-739c-82c9-ef18b268f774',
                     'name' => 'Edited chore',
+                ],
+                'expected' => [
+                    'numResults' => 3,
+                    'choreId' => '019cd5cd-d2d8-72a9-b4c3-41fef1019587',
                 ],
             ],
             [
@@ -211,6 +227,9 @@ final class EditChorePageCest
                     'person' => '',
                     'name' => 'Edited chore',
                 ],
+                'expected' => [
+                    'numResults' => 3,
+                ],
             ],
             [
                 'testDescription' => 'existing, invalid name',
@@ -223,6 +242,9 @@ final class EditChorePageCest
                     'person' => '019cd5cd-92ae-739c-82c9-ef18b268f774',
                     'name' => 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
                 ],
+                'expected' => [
+                    'numResults' => 3,
+                ],
             ],
             [
                 'testDescription' => 'existing, same',
@@ -233,6 +255,10 @@ final class EditChorePageCest
                     'person' => '019cd5cd-8ba6-723d-8525-01672c6a37b6',
                     'name' => 'Do the laundry',
                 ],
+                'expected' => [
+                    'numResults' => 3,
+                    'choreId' => '019cd5cd-d2d8-72a9-b4c3-41fef1019587',
+                ],
             ],
             [
                 'testDescription' => 'existing, empty',
@@ -240,6 +266,10 @@ final class EditChorePageCest
                 'responseCode' => 303,
                 'choreId' => '019cd5cd-d2d8-72a9-b4c3-41fef1019587',
                 'formData' => [],
+                'expected' => [
+                    'numResults' => 3,
+                    'choreId' => '019cd5cd-d2d8-72a9-b4c3-41fef1019587',
+                ],
             ],
             [
                 'testDescription' => 'not found',
@@ -250,6 +280,9 @@ final class EditChorePageCest
                     'person' => '019cd5cd-92ae-739c-82c9-ef18b268f774',
                     'name' => 'Edited chore',
                 ],
+                'expected' => [
+                    'numResults' => 3,
+                ],
             ],
             [
                 'testDescription' => 'not new, not UUID, not found',
@@ -259,6 +292,9 @@ final class EditChorePageCest
                 'formData' => [
                     'person' => '019cd5cd-92ae-739c-82c9-ef18b268f774',
                     'name' => 'Edited chore',
+                ],
+                'expected' => [
+                    'numResults' => 3,
                 ],
             ],
         ];

@@ -73,12 +73,12 @@ final class EditPersonPageCest
     #[DataProvider('_editData')]
     public function edit(FunctionalTester $tester, Example $example): void
     {
-        $name = $example['formData']['name'] ?? null;
+        $expectedName = $example['formData']['name'] ?? null;
 
         if ($example['personId'] !== 'new') {
-            $name ??= $tester->grabfromDatabase('public.person', 'name', ['id' => $example['personId']]);
-        } elseif ($name) {
-            $tester->dontSeeInDatabase('public.person', ['name' => $name]);
+            $expectedName ??= $tester->grabfromDatabase('public.person', 'name', ['id' => $example['personId']]);
+        } elseif ($expectedName) {
+            $tester->dontSeeInDatabase('public.person', ['name' => $expectedName]);
         }
 
         $tester->seeNumRecords(2, 'public.person');
@@ -86,8 +86,6 @@ final class EditPersonPageCest
         $isValidUuid = Uuid::isValid($example['personId']);
         $entries = $isValidUuid ? $tester->grabEntriesFromDatabase('public.person', ['id' => $example['personId']]) : [];
         $otherEntries = $tester->grabEntriesFromDatabase('public.person', $isValidUuid ? ['id !=' => $example['personId']] : []);
-
-        $isNew = $example['personId'] === 'new';
 
         $response = $tester->sendRequest(
             new ServerRequest(
@@ -102,10 +100,10 @@ final class EditPersonPageCest
         $contents = $response->getBody()->getContents();
 
         assertSame($example['responseCode'], $response->getStatusCode());
+        $tester->seeNumRecords($example['expected']['numResults'], 'public.person');
 
         if (!empty($example['errorMessages']) || $example['responseCode'] === 404) {
-            $tester->seeNumRecords(2, 'public.person');
-            $tester->dontSeeInDatabase('public.person', ['name' => $name]);
+            $tester->dontSeeInDatabase('public.person', ['name' => $expectedName]);
 
             foreach ($example['errorMessages'] as $errorMessage) {
                 assertStringContainsString($errorMessage, $contents);
@@ -116,19 +114,20 @@ final class EditPersonPageCest
                 $tester->seeInDatabase('public.person', $entry);
             }
         } else {
-            $location = $response->getHeaderLine('Location');
-            $urlPath = parse_url(filter_var($location, FILTER_SANITIZE_URL), PHP_URL_PATH);
-            assertSame(1, preg_match('#^/person-admin/(.+)$#', $urlPath, $matches));
-            $personId = $isNew ? $matches[1] : $example['personId'];
+            $personId = $example['expected']['personId'];
 
-            // Created or edited person
-            $tester->seeNumRecords($isNew ? 3 : 2, 'public.person');
+            if (!$personId) {
+                $location = $response->getHeaderLine('Location');
+                $urlPath = parse_url(filter_var($location, FILTER_SANITIZE_URL), PHP_URL_PATH);
+                assertSame(1, preg_match('#^/person-admin/(.+)$#', $urlPath, $matches));
+                $personId = $matches[1];
+            }
 
             // Created or edited person correctly
             foreach ($entries as $entry) {
                 $tester->seeInDatabase('public.person', [
                     'id' => $personId,
-                    'name' => $name,
+                    'name' => $expectedName,
                 ]);
             }
         }
@@ -150,6 +149,10 @@ final class EditPersonPageCest
                 'formData' => [
                     'name' => 'New person',
                 ],
+                'expected' => [
+                    'numResults' => 3,
+                    'personId' => '',
+                ],
             ],
             [
                 'testDescription' => 'new, invalid name',
@@ -161,6 +164,9 @@ final class EditPersonPageCest
                 'formData' => [
                     'name' => 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
                 ],
+                'expected' => [
+                    'numResults' => 2,
+                ],
             ],
             [
                 'testDescription' => 'new, empty',
@@ -170,6 +176,9 @@ final class EditPersonPageCest
                 'responseCode' => 200,
                 'personId' => 'new',
                 'formData' => [],
+                'expected' => [
+                    'numResults' => 2,
+                ],
             ],
             [
                 'testDescription' => 'existing, successful',
@@ -178,6 +187,10 @@ final class EditPersonPageCest
                 'personId' => '019cd5cd-8ba6-723d-8525-01672c6a37b6',
                 'formData' => [
                     'name' => 'Edited person',
+                ],
+                'expected' => [
+                    'numResults' => 2,
+                    'personId' => '019cd5cd-8ba6-723d-8525-01672c6a37b6',
                 ],
             ],
             [
@@ -190,6 +203,9 @@ final class EditPersonPageCest
                 'formData' => [
                     'name' => 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
                 ],
+                'expected' => [
+                    'numResults' => 2,
+                ],
             ],
             [
                 'testDescription' => 'existing, same',
@@ -199,6 +215,10 @@ final class EditPersonPageCest
                 'formData' => [
                     'name' => 'John Doe',
                 ],
+                'expected' => [
+                    'numResults' => 2,
+                    'personId' => '019cd5cd-8ba6-723d-8525-01672c6a37b6',
+                ],
             ],
             [
                 'testDescription' => 'existing, empty',
@@ -206,6 +226,10 @@ final class EditPersonPageCest
                 'responseCode' => 303,
                 'personId' => '019cd5cd-8ba6-723d-8525-01672c6a37b6',
                 'formData' => [],
+                'expected' => [
+                    'numResults' => 2,
+                    'personId' => '019cd5cd-8ba6-723d-8525-01672c6a37b6',
+                ],
             ],
             [
                 'testDescription' => 'not found',
@@ -215,6 +239,9 @@ final class EditPersonPageCest
                 'formData' => [
                     'name' => 'Edited person',
                 ],
+                'expected' => [
+                    'numResults' => 2,
+                ],
             ],
             [
                 'testDescription' => 'not new, not UUID, not found',
@@ -223,6 +250,9 @@ final class EditPersonPageCest
                 'personId' => 'old',
                 'formData' => [
                     'name' => 'Edited person',
+                ],
+                'expected' => [
+                    'numResults' => 2,
                 ],
             ],
         ];
