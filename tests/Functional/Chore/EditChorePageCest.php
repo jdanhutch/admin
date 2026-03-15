@@ -8,19 +8,22 @@ use App\Tests\Support\FunctionalTester;
 use Codeception\Attribute\DataProvider;
 use Codeception\Example;
 use HttpSoft\Message\ServerRequest;
+use Ramsey\Uuid\Uuid;
 
 use function PHPUnit\Framework\assertSame;
 use function PHPUnit\Framework\assertStringContainsString;
 
 final class EditChorePageCest
 {
-    #[DataProvider('loadData')]
+    #[DataProvider('_loadData')]
     public function load(FunctionalTester $tester, Example $example): void
     {
+        $entries = $tester->grabEntriesFromDatabase('public.chore');
+
         $response = $tester->sendRequest(
             new ServerRequest(
                 method: 'GET',
-                uri: '/chore-admin/' . $example['choreId'] . '/edit'
+                uri: '/chore-admin/' . $example['choreId'] . '/edit',
             ),
         );
         $contents = $response->getBody()->getContents();
@@ -30,53 +33,63 @@ final class EditChorePageCest
         foreach ($example['strings'] as $string) {
             assertStringContainsString($string, $contents);
         }
+
+        // All records are present and unchanged
+        foreach ($entries as $entry) {
+            $tester->seeInDatabase('public.chore', $entry);
+        }
     }
 
-    public static function loadData(): array
+    public static function _loadData(): array
     {
         return [
-            'load new' => [
+            [
+                'testDescription' => 'new',
                 'choreId' => 'new',
                 'responseCode' => 200,
                 'strings' => ['Save']
             ],
-            'load existing' => [
+            [
+                'testDescription' => 'existing',
                 'choreId' => '019cd5cd-d2d8-72a9-b4c3-41fef1019587',
                 'responseCode' => 200,
                 'strings' => ['Save', 'Do the laundry']
             ],
-            'not found' => [
+            [
+                'testDescription' => 'not found',
                 'choreId' => '00000000-0000-0000-0000-000000000000',
+                'responseCode' => 404,
+                'strings' => []
+            ],
+            [
+                'testDescription' => 'not new, not UUID, not found',
+                'choreId' => 'old',
                 'responseCode' => 404,
                 'strings' => []
             ],
         ];
     }
 
-    #[DataProvider('editData')]
+    #[DataProvider('_editData')]
     public function edit(FunctionalTester $tester, Example $example): void
     {
-        $tester->dontSeeInDatabase('public.chore', ['name' => $example['formData']['name']]);
+        $person = $example['formData']['person'] ?? null;
+        $name = $example['formData']['name'] ?? null;
 
-        // Check same person's chore before request
-        $tester->seeInDatabase('public.chore', [
-            'id' => '019cd5ce-0b7c-7373-8514-256dad0fe4da',
-            'person_id' => '019cd5cd-8ba6-723d-8525-01672c6a37b6',
-            'name' => 'Wash dishes',
-            'done' => false,
-        ]);
+        if ($example['choreId'] !== 'new') {
+            $person ??= $tester->grabfromDatabase('public.chore', 'person_id', ['id' => $example['choreId']]);
+            $name ??= $tester->grabfromDatabase('public.chore', 'name', ['id' => $example['choreId']]);
+        } elseif ($name) {
+            $tester->dontSeeInDatabase('public.chore', ['name' => $name]);
+        }
 
-        // Check other person's chore before request
-        $tester->seeInDatabase('public.chore', [
-            'id' => '019cd5ce-3d83-712c-9447-51209658dd41',
-            'person_id' => '019cd5cd-92ae-739c-82c9-ef18b268f774',
-            'name' => 'Clean bathroom',
-            'done' => true,
-        ]);
+        $tester->seeNumRecords(3, 'public.chore');
+
+        $isValidUuid = Uuid::isValid($example['choreId']);
+        $entries = $isValidUuid ? $tester->grabEntriesFromDatabase('public.chore', ['id' => $example['choreId']]) : [];
+        $otherEntries = $tester->grabEntriesFromDatabase('public.chore', $isValidUuid ? ['id !=' => $example['choreId']] : []);
 
         $isNew = $example['choreId'] === 'new';
-        $isDone = $isNew ? false : ($tester->grabFromDatabase('public.chore', 'done', ['id' => $example['choreId']]) === true);
-        $numRecords = $tester->grabNumRecords('public.chore');
 
         $response = $tester->sendRequest(
             new ServerRequest(
@@ -88,52 +101,54 @@ final class EditChorePageCest
                 uri: '/chore-admin/' . $example['choreId'] . '/edit',
             ),
         );
+        $contents = $response->getBody()->getContents();
 
         assertSame($example['responseCode'], $response->getStatusCode());
 
-        if ($example['errorMessage'] || $example['responseCode'] === 404) {
-            $tester->seeNumRecords($numRecords, 'public.chore');
-            $tester->dontSeeInDatabase('public.chore', ['name' => $example['formData']['name']]);
+        if (!empty($example['errorMessages']) || $example['responseCode'] === 404) {
+            $tester->seeNumRecords(3, 'public.chore');
+            $tester->dontSeeInDatabase('public.chore', ['name' => $name]);
+
+            foreach ($example['errorMessages'] as $errorMessage) {
+                assertStringContainsString($errorMessage, $contents);
+            }
+
+            // Chore unchanged
+            foreach ($entries as $entry) {
+                $tester->seeInDatabase('public.chore', $entry);
+            }
         } else {
             $location = $response->getHeaderLine('Location');
             $urlPath = parse_url(filter_var($location, FILTER_SANITIZE_URL), PHP_URL_PATH);
             assertSame(1, preg_match('#^/chore-admin/(.+)$#', $urlPath, $matches));
             $choreId = $isNew ? $matches[1] : $example['choreId'];
 
-            // Created chore
-            $tester->seeNumRecords($isNew ? $numRecords + 1 : $numRecords, 'public.chore');
+            // Created or edited chore
+            $tester->seeNumRecords($isNew ? 4 : 3, 'public.chore');
 
-            // Created chore correctly
-            $tester->seeInDatabase('public.chore', [
-                'id' => $choreId,
-                'person_id' => $example['formData']['person'],
-                'name' => $example['formData']['name'],
-                'done' => $isDone,
-            ]);
+            // Created or edited chore correctly
+            foreach ($entries as $entry) {
+                $tester->seeInDatabase('public.chore', [
+                    'id' => $choreId,
+                    'person_id' => $person,
+                    'name' => $name,
+                    'done' => $entry['done'],
+                ]);
+            }
         }
 
-        // Did not edit wrong chore
-        $tester->seeInDatabase('public.chore', [
-            'id' => '019cd5ce-0b7c-7373-8514-256dad0fe4da',
-            'person_id' => '019cd5cd-8ba6-723d-8525-01672c6a37b6',
-            'name' => 'Wash dishes',
-            'done' => false,
-        ]);
-
-        // Did not edit other person's chore
-        $tester->seeInDatabase('public.chore', [
-            'id' => '019cd5ce-3d83-712c-9447-51209658dd41',
-            'person_id' => '019cd5cd-92ae-739c-82c9-ef18b268f774',
-            'name' => 'Clean bathroom',
-            'done' => true,
-        ]);
+        // All other records are present and unchanged
+        foreach ($otherEntries as $entry) {
+            $tester->seeInDatabase('public.chore', $entry);
+        }
     }
 
-    public static function editData(): array
+    public static function _editData(): array
     {
         return [
-            'new chore, successful' => [
-                'errorMessage' => '',
+            [
+                'testDescription' => 'new, successful',
+                'errorMessages' => [],
                 'responseCode' => 303,
                 'choreId' => 'new',
                 'formData' => [
@@ -141,8 +156,11 @@ final class EditChorePageCest
                     'name' => 'New chore',
                 ],
             ],
-            'new chore, invalid person' => [
-                'errorMessage' => 'The value of Person is not a valid UUID.',
+            [
+                'testDescription' => 'new, invalid person',
+                'errorMessages' => [
+                    'The value of Person is not a valid UUID.',
+                ],
                 'responseCode' => 200,
                 'choreId' => 'new',
                 'formData' => [
@@ -150,8 +168,11 @@ final class EditChorePageCest
                     'name' => 'New chore',
                 ],
             ],
-            'new chore, invalid name' => [
-                'errorMessage' => 'Name must contain at most 64 characters.',
+            [
+                'testDescription' => 'new, invalid name',
+                'errorMessages' => [
+                    'Name must contain at most 64 characters.',
+                ],
                 'responseCode' => 200,
                 'choreId' => 'new',
                 'formData' => [
@@ -159,8 +180,19 @@ final class EditChorePageCest
                     'name' => 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
                 ],
             ],
-            'existing chore, successful' => [
-                'errorMessage' => '',
+            [
+                'testDescription' => 'new, empty',
+                'errorMessages' => [
+                    'The value of Person is not a valid UUID.',
+                    'Name must contain at least 1 character.',
+                ],
+                'responseCode' => 200,
+                'choreId' => 'new',
+                'formData' => [],
+            ],
+            [
+                'testDescription' => 'existing, successful',
+                'errorMessages' => [],
                 'responseCode' => 303,
                 'choreId' => '019cd5cd-d2d8-72a9-b4c3-41fef1019587',
                 'formData' => [
@@ -168,8 +200,11 @@ final class EditChorePageCest
                     'name' => 'Edited chore',
                 ],
             ],
-            'existing chore, invalid person' => [
-                'errorMessage' => 'The value of Person is not a valid UUID.',
+            [
+                'testDescription' => 'existing, invalid person',
+                'errorMessages' => [
+                    'The value of Person is not a valid UUID.',
+                ],
                 'responseCode' => 200,
                 'choreId' => '019cd5cd-d2d8-72a9-b4c3-41fef1019587',
                 'formData' => [
@@ -177,8 +212,11 @@ final class EditChorePageCest
                     'name' => 'Edited chore',
                 ],
             ],
-            'existing chore, invalid name' => [
-                'errorMessage' => 'Name must contain at most 64 characters.',
+            [
+                'testDescription' => 'existing, invalid name',
+                'errorMessages' => [
+                    'Name must contain at most 64 characters.',
+                ],
                 'responseCode' => 200,
                 'choreId' => '019cd5cd-d2d8-72a9-b4c3-41fef1019587',
                 'formData' => [
@@ -186,10 +224,38 @@ final class EditChorePageCest
                     'name' => 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
                 ],
             ],
-            'not found' => [
-                'errorMessage' => '',
+            [
+                'testDescription' => 'existing, same',
+                'errorMessages' => [],
+                'responseCode' => 303,
+                'choreId' => '019cd5cd-d2d8-72a9-b4c3-41fef1019587',
+                'formData' => [
+                    'person' => '019cd5cd-8ba6-723d-8525-01672c6a37b6',
+                    'name' => 'Do the laundry',
+                ],
+            ],
+            [
+                'testDescription' => 'existing, empty',
+                'errorMessages' => [],
+                'responseCode' => 303,
+                'choreId' => '019cd5cd-d2d8-72a9-b4c3-41fef1019587',
+                'formData' => [],
+            ],
+            [
+                'testDescription' => 'not found',
+                'errorMessages' => [],
                 'responseCode' => 404,
                 'choreId' => '00000000-0000-0000-0000-000000000000',
+                'formData' => [
+                    'person' => '019cd5cd-92ae-739c-82c9-ef18b268f774',
+                    'name' => 'Edited chore',
+                ],
+            ],
+            [
+                'testDescription' => 'not new, not UUID, not found',
+                'errorMessages' => [],
+                'responseCode' => 404,
+                'choreId' => 'old',
                 'formData' => [
                     'person' => '019cd5cd-92ae-739c-82c9-ef18b268f774',
                     'name' => 'Edited chore',

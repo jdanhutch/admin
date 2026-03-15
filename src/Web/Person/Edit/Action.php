@@ -35,7 +35,7 @@ final readonly class Action
         if ($isNew) {
             $person = new Person();
         } else {
-            $person = Person::findByPk($id);
+            $person = Person::findByUuidPk($id);
 
             if ($person === null) {
                 return $this->responseFactory->createResponse(Status::NOT_FOUND);

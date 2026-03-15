@@ -26,7 +26,7 @@ final readonly class Action
         ConnectionInterface $db,
     ): ResponseInterface
     {
-        $person = Person::findbyPk($id);
+        $person = Person::findByUuidPk($id);
 
         if ($person === null) {
             return $this->responseFactory->createResponse(Status::NOT_FOUND);

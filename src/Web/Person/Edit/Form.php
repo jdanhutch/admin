@@ -11,6 +11,6 @@ use Yiisoft\Validator\Rule\Length;
 final class Form extends FormModel
 {
     #[Label('Name')]
-    #[Length(min: 1)]
+    #[Length(min: 1, max: 64)]
     public string $name = '';
 }

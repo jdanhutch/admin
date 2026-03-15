@@ -78,18 +78,15 @@ document.addEventListener('change', function(e) {
         fetch('<?= $urlGenerator->generate('chore/mark', ['id' => '__ID__']) ?>'.replace('__ID__', choreId), {
             method: 'POST',
             body: formData,
-        })
-        .then(response => {
+        }).then(response => {
             if (!response.ok) {
                 checkbox.checked = !checkbox.checked;
                 alert('Error updating chore');
             }
-        })
-        .catch(error => {
+        }).catch(error => {
             checkbox.checked = !checkbox.checked;
             alert('Error updating chore: ' + error);
-        })
-        .finally(() => {
+        }).finally(() => {
             checkbox.disabled = false;
         });
     }

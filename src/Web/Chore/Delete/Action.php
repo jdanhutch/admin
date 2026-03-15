@@ -23,7 +23,7 @@ final readonly class Action
         string $id
     ): ResponseInterface
     {
-        $chore = Chore::findByPk($id);
+        $chore = Chore::findByUuidPk($id);
 
         if ($chore === null) {
             return $this->responseFactory->createResponse(Status::NOT_FOUND);

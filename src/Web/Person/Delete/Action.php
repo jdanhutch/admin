@@ -23,7 +23,7 @@ final readonly class Action
         string $id
     ): ResponseInterface
     {
-        $person = Person::findByPk($id);
+        $person = Person::findByUuidPk($id);
 
         if ($person === null) {
             return $this->responseFactory->createResponse(Status::NOT_FOUND);

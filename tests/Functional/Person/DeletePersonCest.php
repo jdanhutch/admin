@@ -12,22 +12,22 @@ use Ramsey\Uuid\Uuid;
 
 use function PHPUnit\Framework\assertSame;
 
-final class DeleteChoreCest
+final class DeletePersonCest
 {
     #[DataProvider('_deleteData')]
     public function delete(FunctionalTester $tester, Example $example): void
     {
-        $tester->seeNumRecords(3, 'public.chore');
+        $tester->seeNumRecords(2, 'public.person');
 
-        $isValidUuid = Uuid::isValid($example['choreId']);
-        $entries = $isValidUuid ? $tester->grabEntriesFromDatabase('public.chore', ['id' => $example['choreId']]) : [];
-        $otherEntries = $tester->grabEntriesFromDatabase('public.chore', $isValidUuid ? ['id !=' => $example['choreId']] : []);
+        $isValidUuid = Uuid::isValid($example['personId']);
+        $entries = $isValidUuid ? $tester->grabEntriesFromDatabase('public.person', ['id' => $example['personId']]) : [];
+        $otherEntries = $tester->grabEntriesFromDatabase('public.person', $isValidUuid ? ['id !=' => $example['personId']] : []);
 
         $response = $tester->sendRequest(
             new ServerRequest(
                 parsedBody: ['_csrf' => 'test'],
                 method: 'POST',
-                uri: '/chore-admin/' . $example['choreId'] . '/delete',
+                uri: '/person-admin/' . $example['personId'] . '/delete',
             ),
         );
 
@@ -35,19 +35,19 @@ final class DeleteChoreCest
 
         if ($example['responseCode'] === 303) {
             // No new records created
-            $tester->seeNumRecords(2, 'public.chore');
+            $tester->seeNumRecords(1, 'public.person');
 
-            // Deleted chore
+            // Deleted person
             foreach ($entries as $entry) {
-                $tester->dontSeeInDatabase('public.chore', $entry);
+                $tester->dontSeeInDatabase('public.person', $entry);
             }
         } else {
-            $tester->seeNumRecords(3, 'public.chore');
+            $tester->seeNumRecords(2, 'public.person');
         }
 
         // All other records are present and unchanged
         foreach ($otherEntries as $entry) {
-            $tester->seeInDatabase('public.chore', $entry);
+            $tester->seeInDatabase('public.person', $entry);
         }
     }
 
@@ -56,17 +56,17 @@ final class DeleteChoreCest
         return [
             [
                 'testDescription' => 'existing',
-                'choreId' => '019cd5cd-d2d8-72a9-b4c3-41fef1019587',
+                'personId' => '019cd5cd-8ba6-723d-8525-01672c6a37b6',
                 'responseCode' => 303,
             ],
             [
                 'testDescription' => 'not found',
-                'choreId' => '00000000-0000-0000-0000-000000000000',
+                'personId' => '00000000-0000-0000-0000-000000000000',
                 'responseCode' => 404,
             ],
             [
                 'testDescription' => 'new, not UUID, not found',
-                'choreId' => 'new',
+                'personId' => 'new',
                 'responseCode' => 404,
             ],
         ];
