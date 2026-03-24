@@ -19,6 +19,9 @@ Thumbs.db
 # Mac DS_Store Files
 .DS_Store
 
+# node_modules dir
+node_modules
+
 # composer vendor dir
 /vendor
 
