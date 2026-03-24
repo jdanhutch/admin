@@ -1,4 +1,4 @@
-actor: WebTester
+actor: AcceptanceTester
 extensions:
   enabled:
     - Codeception\Extension\RunProcess:
@@ -7,12 +7,14 @@ extensions:
         sleep: 5
 modules:
   enabled:
-    - PhpBrowser:
-        url: http://127.0.0.1:8080
+    - WebDriver:
+        url: http://localhost:8080
+        browser: chrome
+        window_size: 1280x720
     - Db:
         dsn: 'pgsql:host=localhost;port=5432;dbname=yii3_admin_test'
         user: 'postgres'
         password: 'password'
         dump: 'tests/Support/Data/dump.sql'
-        cleanup: true
         populate: true
+        cleanup: true

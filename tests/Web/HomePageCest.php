@@ -15,4 +15,13 @@ final class HomePageCest
         $I->expectTo('see page home.');
         $I->see('Hello!');
     }
+
+    public function adminPageButton(WebTester $I): void
+    {
+        $I->wantTo('home page\'s admin button works');
+        $I->amOnPage('/');
+        $I->expectTo('go to the admin page from the home page');
+        $I->click('Admin');
+        $I->seeCurrentUrlEquals('/admin');
+    }
 }
