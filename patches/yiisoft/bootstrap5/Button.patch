@@ -1,0 +1,22 @@
+diff --git a/vendor/yiisoft/bootstrap5/src/Button.php b/vendor/yiisoft/bootstrap5/src/Button.php
+index c2abdb6..89483e8 100644
+--- a/vendor/yiisoft/bootstrap5/src/Button.php
++++ b/vendor/yiisoft/bootstrap5/src/Button.php
+@@ -63,7 +63,7 @@ final class Button extends Widget
+      * ```php
+      * Button::link('Button', '/path/to/page');
+      * ```
+- */
++     */
+     public static function link(
+         string|Stringable $label = '',
+         string|null $url = null,
+@@ -71,7 +71,7 @@ final class Button extends Widget
+         array $config = [],
+         string|null $theme = null
+     ): self {
+-        return self::widget($constructorArguments, $config, $theme)->label($label)->type(ButtonType::LINK)->url($url);
++        return self::widget($constructorArguments, $config, $theme)->label($label)->type(ButtonType::LINK)->variant(ButtonVariant::LINK)->url($url);
+     }
+
+     /**

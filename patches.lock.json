@@ -1,0 +1,17 @@
+{
+    "_hash": "b9668125249a724a1311dbd597b7ffa5032ac5035718b056157045870a9c52e3",
+    "patches": {
+        "yiisoft/bootstrap5": [
+            {
+                "package": "yiisoft/bootstrap5",
+                "description": "Link button variant patch",
+                "url": "patches/yiisoft/bootstrap5/Button.patch",
+                "sha256": "24dd99f45c1ed98d290b7db2741035aa3a66a595de24131471d2709f2af36cdd",
+                "depth": 1,
+                "extra": {
+                    "provenance": "root"
+                }
+            }
+        ]
+    }
+}
