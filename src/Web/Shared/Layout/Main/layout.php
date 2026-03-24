@@ -3,6 +3,10 @@
 declare(strict_types=1);
 
 use App\Web\Shared\Layout\Main\MainAsset;
+use Yiisoft\Bootstrap5\Assets\BootstrapAsset;
+use Yiisoft\Bootstrap5\Nav;
+use Yiisoft\Bootstrap5\NavBar;
+use Yiisoft\Bootstrap5\NavLink;
 use Yiisoft\Html\Html;
 
 /**
@@ -16,7 +20,10 @@ use Yiisoft\Html\Html;
  * @var Yiisoft\Router\UrlGeneratorInterface $urlGenerator
  */
 
+$navBar = new NavBar();
+
 $assetManager->register(MainAsset::class);
+$assetManager->register(BootstrapAsset::class);
 
 $this->addCssFiles($assetManager->getCssFiles());
 $this->addCssStrings($assetManager->getCssStrings());
@@ -65,6 +72,14 @@ $this->beginPage()
             </g>
         </svg>
     </a>
+    <?= $navBar->begin() ?>
+    <?= Nav::widget()
+            ->items(
+                NavLink::to('Home', '/'),
+                NavLink::to('Admin', '/admin')
+            )
+    ?>
+    <?= NavBar::end() ?>
 </div>
 
 <div class="content">
